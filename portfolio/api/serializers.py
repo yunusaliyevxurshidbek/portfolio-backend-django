@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from base.models import Project, ProjectImage, TechnologySection
 from base.models import Project, TechnologySection, ProjectImage
+from django.conf import settings
 
 
 class TechnologySectionSerializer(serializers.ModelSerializer):
@@ -15,13 +16,11 @@ class ProjectImageSerializer(serializers.ModelSerializer):
         fields = ["image_url"]
 
     def get_image_url(self, obj):
-        request = self.context.get("request")
         if obj.image and hasattr(obj.image, "url"):
-            url = obj.image.url
-
-            if request is not None:
-                return request.build_absloute_uri(url)
-            return url
+            base_url = settings.AWS_S3_ENDPOINT_URL
+            bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+            path = obj.image.name
+            return f"{base_url} / {bucket_name} / {path}"
         return None
 
 class ProjectSerializer(serializers.ModelSerializer):
