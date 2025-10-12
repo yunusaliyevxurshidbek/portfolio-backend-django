@@ -20,7 +20,7 @@ class ProjectImageSerializer(serializers.ModelSerializer):
             base_url = settings.AWS_S3_ENDPOINT_URL
             bucket_name = settings.AWS_STORAGE_BUCKET_NAME
             path = obj.image.name
-            return f"{base_url} / {bucket_name} / {path}"
+            return f"{base_url}/{bucket_name}/{path}"
         return None
 
 class ProjectSerializer(serializers.ModelSerializer):
