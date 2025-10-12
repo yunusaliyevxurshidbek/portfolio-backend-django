@@ -18,9 +18,8 @@ class ProjectImageSerializer(serializers.ModelSerializer):
     def get_image_url(self, obj):
         if obj.image and hasattr(obj.image, "url"):
             public_base_url = "https://pub-7690719314794044b6cc954361c5e563.r2.dev"
-            bucket = settings.AWS_STORAGE_BUCKET_NAME.strip("/")
             file_path = obj.image.name.strip("/")
-            return f"{public_base_url}/{bucket}/{file_path}"
+            return f"{public_base_url}/{file_path}"
         return None
 
 class ProjectSerializer(serializers.ModelSerializer):
