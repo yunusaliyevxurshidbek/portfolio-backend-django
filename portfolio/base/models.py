@@ -15,7 +15,8 @@ class Project(models.Model):
     
 class ProjectImage(models.Model):
     project = models.ForeignKey(Project, related_name = "project_images", on_delete = models.CASCADE)
-    image = models.FileField(upload_to = "projects/images/")
+    image = models.FileField(upload_to = "projects/%Y/%m/%d/")
+    uploaded_at = models.DateTimeField(auto_now_add = True, blank = True)
 
     def __str__(self):
         return f"Image for {self.project.project_name}"

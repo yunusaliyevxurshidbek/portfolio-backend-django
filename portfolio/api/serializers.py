@@ -9,9 +9,20 @@ class TechnologySectionSerializer(serializers.ModelSerializer):
         fields = ["title", "details"]
 
 class ProjectImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
     class Meta:
         model = ProjectImage
-        fields = ["image"]
+        fields = ["image_url"]
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image and hasattr(obj.image, "url"):
+            url = obj.image.url
+
+            if request is not None:
+                return request.build_absloute_uri(url)
+            return url
+        return None
 
 class ProjectSerializer(serializers.ModelSerializer):
     technology_sections = TechnologySectionSerializer(many = True, read_only = True)
