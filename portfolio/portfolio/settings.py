@@ -102,8 +102,14 @@ AWS_STORAGE_BUCKET_NAME = _env("R2_BUCKET_NAME")
 AWS_S3_ENDPOINT_URL = _env("R2_ENDPOINT")
 R2_ACCOUNT_ID = _env("R2_ACCOUNT_ID")
 
+# Normalize endpoint URL (required by boto3)
+if AWS_S3_ENDPOINT_URL:
+    AWS_S3_ENDPOINT_URL = AWS_S3_ENDPOINT_URL.strip().rstrip("/")
+    if not AWS_S3_ENDPOINT_URL.startswith("http"):
+        AWS_S3_ENDPOINT_URL = f"https://{AWS_S3_ENDPOINT_URL}"
+
 AWS_S3_REGION_NAME = "auto"
-AWS_S3_ADDRESSING_STYLE = "virtual" 
+AWS_S3_ADDRESSING_STYLE = "virtual"
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_SIGNATURE_VERSION = "s3v4"
@@ -111,6 +117,11 @@ AWS_S3_SIGNATURE_VERSION = "s3v4"
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        # Be explicit to avoid any fallback behavior
+        "OPTIONS": {
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+        },
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -128,4 +139,18 @@ MEDIA_URL = (
     "/media/"
 )
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Validate R2 configuration in Render to prevent silent fallbacks
+if os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL"):
+    required = {
+        "R2_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
+        "R2_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
+        "R2_BUCKET_NAME": AWS_STORAGE_BUCKET_NAME,
+        "R2_ENDPOINT": AWS_S3_ENDPOINT_URL,
+    }
+    missing = [k for k, v in required.items() if not v]
+    if missing:
+        raise ImproperlyConfigured(
+            "Missing Cloudflare R2 environment variables: " + ", ".join(missing)
+        )
 
