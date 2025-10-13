@@ -57,7 +57,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'portfolio.wsgi.application'
 
 # database:
-# Expect DATABASE_URL to be provided (via .env locally or Render env var)
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ImproperlyConfigured(
@@ -102,7 +101,7 @@ AWS_STORAGE_BUCKET_NAME = _env("R2_BUCKET_NAME")
 AWS_S3_ENDPOINT_URL = _env("R2_ENDPOINT")
 R2_ACCOUNT_ID = _env("R2_ACCOUNT_ID")
 
-# Normalize endpoint URL (required by boto3)
+# endpoint_url:
 if AWS_S3_ENDPOINT_URL:
     AWS_S3_ENDPOINT_URL = AWS_S3_ENDPOINT_URL.strip().rstrip("/")
     if not AWS_S3_ENDPOINT_URL.startswith("http"):
@@ -114,7 +113,7 @@ AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 
-# Cloudflare custom domain and media URL
+# cloudflare:
 AWS_S3_CUSTOM_DOMAIN = (
     f"{AWS_STORAGE_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
     if AWS_STORAGE_BUCKET_NAME and R2_ACCOUNT_ID
@@ -132,7 +131,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        # Be explicit to avoid any fallback behavior
         "OPTIONS": {
             "bucket_name": AWS_STORAGE_BUCKET_NAME,
             "custom_domain": AWS_S3_CUSTOM_DOMAIN,
@@ -155,7 +153,6 @@ MEDIA_URL = (
 )
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Validate R2 configuration in Render to prevent silent fallbacks
 if os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL"):
     required = {
         "R2_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
