@@ -114,6 +114,21 @@ AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 
+# Cloudflare custom domain and media URL
+AWS_S3_CUSTOM_DOMAIN = (
+    f"{AWS_STORAGE_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+    if AWS_STORAGE_BUCKET_NAME and R2_ACCOUNT_ID
+    else None
+)
+
+MEDIA_URL = (
+    f"https://{AWS_S3_CUSTOM_DOMAIN}/" if AWS_S3_CUSTOM_DOMAIN else 
+    f"{AWS_S3_ENDPOINT_URL.rstrip('/')}/{AWS_STORAGE_BUCKET_NAME}/" if AWS_S3_ENDPOINT_URL and AWS_STORAGE_BUCKET_NAME else 
+    "/media/"
+)
+MEDIA_ROOT = BASE_DIR / "media"
+
+
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
