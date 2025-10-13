@@ -4,7 +4,7 @@ from base.models import Project
 from .serializers import ProjectSerializer
   
 
-@api_view(["GET"])
+@api_view(["GET", "HEAD"])
 def getProjects(request):
     projects = Project.objects.all()
     serializer = ProjectSerializer(projects, many = True)
