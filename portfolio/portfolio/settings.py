@@ -82,8 +82,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Cloudflare R2 (S3 compatible) storage
-# Sanitize env values to avoid trailing/leading whitespace issues
+# cloudflare_settings:
 def _env(name: str, default: str | None = None) -> str | None:
     val = os.getenv(name, default)
     return val.strip() if isinstance(val, str) else val
@@ -95,12 +94,11 @@ AWS_S3_ENDPOINT_URL = _env("R2_ENDPOINT")
 R2_ACCOUNT_ID = _env("R2_ACCOUNT_ID")
 
 AWS_S3_REGION_NAME = "auto"
-AWS_S3_ADDRESSING_STYLE = "virtual"  # Required for R2
+AWS_S3_ADDRESSING_STYLE = "virtual" 
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 
-# Use Django 5 STORAGES API instead of deprecated DEFAULT_FILE_STORAGE/STATICFILES_STORAGE
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
@@ -110,7 +108,6 @@ STORAGES = {
     },
 }
 
-# Optional: use custom domain style for cleaner media URLs
 AWS_S3_CUSTOM_DOMAIN = (
     f"{AWS_STORAGE_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
     if AWS_STORAGE_BUCKET_NAME and R2_ACCOUNT_ID
