@@ -79,24 +79,47 @@ USE_TZ = True
 # static_files:
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# cloudflare:
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+# Cloudflare R2 (S3 compatible) storage
+# Sanitize env values to avoid trailing/leading whitespace issues
+def _env(name: str, default: str | None = None) -> str | None:
+    val = os.getenv(name, default)
+    return val.strip() if isinstance(val, str) else val
 
-AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
-AWS_S3_ENDPOINT_URL = os.getenv("R2_ENDPOINT")
+AWS_ACCESS_KEY_ID = _env("R2_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = _env("R2_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = _env("R2_BUCKET_NAME")
+AWS_S3_ENDPOINT_URL = _env("R2_ENDPOINT")
+R2_ACCOUNT_ID = _env("R2_ACCOUNT_ID")
 
 AWS_S3_REGION_NAME = "auto"
-AWS_S3_ADDRESSING_STYLE = "virtual"  # R2 uchun shart
+AWS_S3_ADDRESSING_STYLE = "virtual"  # Required for R2
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 
-MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com/"
+# Use Django 5 STORAGES API instead of deprecated DEFAULT_FILE_STORAGE/STATICFILES_STORAGE
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
+# Optional: use custom domain style for cleaner media URLs
+AWS_S3_CUSTOM_DOMAIN = (
+    f"{AWS_STORAGE_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+    if AWS_STORAGE_BUCKET_NAME and R2_ACCOUNT_ID
+    else None
+)
+MEDIA_URL = (
+    f"https://{AWS_S3_CUSTOM_DOMAIN}/" if AWS_S3_CUSTOM_DOMAIN else 
+    f"{AWS_S3_ENDPOINT_URL.rstrip('/')}/{AWS_STORAGE_BUCKET_NAME}/" if AWS_S3_ENDPOINT_URL and AWS_STORAGE_BUCKET_NAME else 
+    "/media/"
+)
+MEDIA_ROOT = BASE_DIR / "media"
 
